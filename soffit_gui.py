@@ -15,7 +15,8 @@ jogSpeed = 10
 #num_pressed = 0
 #on = GPIO.HIGH
 #off = GPIO.LOW
-font = "Bahnschrift"
+font = "Quicksand"
+require_home = True
 
 pul = 17
 dir = 27
@@ -27,18 +28,14 @@ GPIO.setup(pul,GPIO.OUT)
 GPIO.setup(cutRelay,GPIO.OUT)
 GPIO.setup(dir,GPIO.OUT)
 GPIO.setup(ena,GPIO.OUT)
-
 GPIO.output(dir,off)
 GPIO.output(pul,off)
 GPIO.output(ena,on)
 time.sleep(.0001)
 GPIO.output(ena,off)
 time.sleep(.0001)
-
-
 def moveright(rotate):
     
-
     GPIO.output(dir,off)
     GPIO.output(pul,off)
     GPIO.output(ena,on)
@@ -50,10 +47,8 @@ def moveright(rotate):
       time.sleep(.01/int(jogSpeed))
       GPIO.output(pul,off)
       time.sleep(.01/int(jogSpeed))
-
 def moveleft(rotate):
     
-
     GPIO.output(dir,off)
     GPIO.output(pul,off)
     GPIO.output(ena,on)
@@ -126,7 +121,7 @@ class Widget1():
         if parent == 0:
             self.w1 = Tk()
             self.w1.title("Soffit Cutter")
-           
+            self.value = BooleanVar()
             
             self.w1.configure(bg = '#212121')
             self.w1.geometry('1150x740')
@@ -147,10 +142,10 @@ class Widget1():
         self.ta2.place(x = 0, y = 0, width = 1150, height = 740)
         self.ta2.configure(bg = "#212121")
         self.tab1.add(self.ta2, text = "Settings")
-        self.backward_jog = Button(self.ta1, border = 0, highlightthickness = 0, text = "<", bg = "#333333", fg = "#FFFFFF", activebackground = "#111111", activeforeground= "#FFFFFF",font = tkinter.font.Font(family = font, size = 70), cursor = "arrow", state = "normal")
+        self.backward_jog = Button(self.ta1, border = 0,anchor = "n", highlightthickness = 0, text = "<", bg = "#333333", fg = "#FFFFFF", activebackground = "#111111", activeforeground= "#FFFFFF",font = tkinter.font.Font(family = font, size = 70), cursor = "arrow", state = "normal")
         self.backward_jog.place(x = 40, y = 220, width = 250, height = 150)
         self.backward_jog['command'] = self.jog_backward
-        self.forward_jog = Button(self.ta1, border = 0, highlightthickness = 0, text = ">", bg = "#333333", fg = "#FFFFFF", activebackground = "#111111", activeforeground= "#FFFFFF",font = tkinter.font.Font(family = font, size = 70), cursor = "arrow", state = "normal")
+        self.forward_jog = Button(self.ta1, border = 0, anchor="n",highlightthickness = 0, text = ">", bg = "#333333", fg = "#FFFFFF", activebackground = "#111111", activeforeground= "#FFFFFF",font = tkinter.font.Font(family = font, size = 70), cursor = "arrow", state = "normal")
         self.forward_jog.place(x = 300, y = 220, width = 250, height = 150)
         self.forward_jog['command'] = self.jog_forward
         self.radio_one = Radiobutton(self.ta1, highlightthickness = 0, selectcolor = "#212121", bg = "#212121", fg = "#ffffff", activebackground = "#212121", activeforeground= "#FFFFFF",text = "1in", value = 1, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
@@ -186,13 +181,18 @@ class Widget1():
         self.button8['command'] = self.back_pressed
         self.label3 = Label(self.ta1, anchor='w', text = "Soffit Length", bg = "#212121", fg = "#ffffff", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
         self.label3.place(x = 570, y = 40, width = 120, height = 32)
+        self.soffit_filler = Label(self.ta1, anchor='e', highlightthickness = 0, text = "", bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
+        self.soffit_filler.place(x = 570, y = 80, width = 150, height = 50)
         self.soffit_length = Entry(self.ta1, border = 0, highlightthickness = 0,bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
-        self.soffit_length.place(x = 570, y = 80, width = 510, height = 50)
+        
+        self.soffit_length.place(x = 580, y = 80, width = 500, height = 50)
         self.soffit_length.focus_set()
         self.soffitIndicator = Label(self.ta1, anchor='e', highlightthickness = 0, text = "", bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
         self.soffitIndicator.place(x = 920, y = 80, width = 150, height = 50)
+        self.cut_filler = Label(self.ta1, anchor='e', highlightthickness = 0, text = "", bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
+        self.cut_filler.place(x = 570, y = 180, width = 150, height = 50)
         self.cut_length = Entry(self.ta1, border = 0, highlightthickness = 0,bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
-        self.cut_length.place(x = 570, y = 180, width = 510, height = 50)
+        self.cut_length.place(x = 580, y = 180, width = 500, height = 50)
         self.cutIndicator = Label(self.ta1, text = "", highlightthickness = 0, bg = "#333333", fg = "#FFFFFF", anchor='e', font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
         self.cutIndicator.place(x = 920, y = 180, width = 150, height = 50)
         self.label4 = Label(self.ta1, anchor='w', text = "Cut Length", bg = "#212121", fg = "#ffffff", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
@@ -214,7 +214,7 @@ class Widget1():
         self.jog_speed.insert(INSERT, "10")
         self.jog_speed_label = Label(self.ta2, anchor='w', bg = "#212121", fg = "#ffffff",text = "Jog Speed", font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
         self.jog_speed_label.place(x = 38, y = 50, width = 127, height = 32)
-        self.require_homing = Checkbutton(self.ta2,anchor='w', highlightthickness = 0, selectcolor="#212121", bg = "#212121", fg = "#ffffff", text = "Require Homing(recommended)", activebackground = "#212121", activeforeground= "#ffffff", font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
+        self.require_homing = Checkbutton(self.ta2,anchor='w', variable=self.value, highlightthickness = 0, selectcolor="#212121", bg = "#212121", fg = "#ffffff", text = "Require Homing(recommended)", activebackground = "#212121", activeforeground= "#ffffff", font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
         self.require_homing.place(x = 38, y = 270, width = 480, height = 30)
         self.require_homing.select()
         self.default_soffit_length = Entry(self.ta2, border = 0, highlightthickness = 0,bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = "Bahnschrift", size = 8), cursor = "arrow", state = "normal")
@@ -278,9 +278,12 @@ class Widget1():
         global defaultSoffitLength
         global jogSpeed
         global stepsPerIn
+        global require_home
+        require_home = self.value.get()
         jogSpeed = self.jog_speed.get()
         defaultSoffitLength = convert_to_inch(self.default_soffit_length.get())
         stepsPerIn = int(self.step_per_in.get())
+        print(require_home)
         
     
     
@@ -297,22 +300,29 @@ class Widget1():
     
     def next_pressed(self):
         print('next_pressed')
-        if home == 0:
+        if home == 0 and require_home:
             self.label8.configure(text = "Please Home Machine Before Cutting")
             self.home.configure(bg = "#632e2a")
         elif self.soffit_length.index("end") == 0:
+            self.soffit_length.focus_set()
             self.label8.configure(text = "Please Enter a Value in the Soffit Length Box")
+            
             self.soffit_length.configure(bg="#632e2a")
             self.soffitIndicator.configure(bg="#632e2a")
+            self.soffit_filler.configure(bg="#632e2a")
         elif convert_to_inch(self.soffit_length.get()) > defaultSoffitLength:
             print(defaultSoffitLength)
+            self.soffit_length.focus_set()
             self.label8.configure(text = "The Maximum Soffit Size is " + str(convert_to_inch(defaultSoffitLength/12)) +"ft (" + str(defaultSoffitLength) + "in)", fg = "#bd251a")
         elif self.cut_length.index("end") == 0:
             self.label8.configure(text = "Please Enter a Value in the Cut Length Box")
+            self.cut_length.focus_set()
             self.cut_length.configure(bg="#632e2a")
             self.cutIndicator.configure(bg="#632e2a")
+            self.cut_filler.configure(bg="#632e2a")
             self.soffit_length.configure(bg="#333333")
             self.soffitIndicator.configure(bg="#333333")
+            self.soffit_filler.configure(bg="#333333")
         elif self.num_cuts.index("end") == 0:
             self.num_cuts.insert(END, str(math.floor((convert_to_inch(self.soffit_length.get()))/convert_to_inch(self.cut_length.get()))))
             self.label8.configure(text = "Auto Populated Number of cuts", fg = "#278a41")
@@ -320,6 +330,7 @@ class Widget1():
             self.soffit_length.configure(bg="#333333")
             self.cut_length.configure(bg="#333333")
             self.cutIndicator.configure(bg="#333333")
+            self.cut_filler.configure(bg="#333333")
         elif self.num_cuts.index("end") > 0 and convert_to_inch(self.cut_length.get())*int(self.num_cuts.get())>convert_to_inch(self.soffit_length.get()):
             self.label8.configure(text = "Not Enough Material for This Cut", fg = "#bd251a")
         
@@ -397,3 +408,4 @@ class Widget1():
 if __name__ == '__main__':
     a = Widget1(0)
     a.w1.mainloop()
+
