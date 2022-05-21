@@ -2,19 +2,18 @@ from tkinter import *
 from tkinter.ttk import Progressbar
 from tkinter.ttk import Combobox
 from tkinter.ttk import Notebook
+import re
 import tkinter.font
 import math
-#import RPi.GPIO as GPIO
 import time
-#GPIO.setmode(GPIO.BCM)
+import RPi.GPIO as GPIO
+
 home = 0
 readyToCut = 0
 defaultSoffitLength = 144
 stepsPerIn = 400
 jogSpeed = 10
-#num_pressed = 0
-#on = GPIO.HIGH
-#off = GPIO.LOW
+
 font = "Quicksand"
 require_home = True
 
@@ -23,7 +22,13 @@ dir = 27
 ena = 22
 switch = 21
 cutRelay = 23
-"""GPIO.setup(switch,GPIO.IN)
+
+
+num_pressed = 0
+on = GPIO.HIGH
+off = GPIO.LOW
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(switch,GPIO.IN)
 GPIO.setup(pul,GPIO.OUT)
 GPIO.setup(cutRelay,GPIO.OUT)
 GPIO.setup(dir,GPIO.OUT)
@@ -62,25 +67,12 @@ def moveleft(rotate):
       time.sleep(.01/int(jogSpeed))
       GPIO.output(pul,off)
       time.sleep(.01/int(jogSpeed))
-      """
+    
 
-def convert_to_inch(val):
-        num = int(''.join(filter(str.isdigit, val)))
-        if "FT" in val.upper() or "FEET" in val.upper() or "\'" in val.upper():
-            result = num*12
-        elif "MM" in val.upper():
-            result = num/25.4
-        elif "CM" in val.upper():
-            result = num/2.54
-        elif "IN" in val.upper() or "INCHES" in val.upper() or "\"" in val.upper():
-            result = num
-        else:
-            result = val
-            
-        return int(result)
-"""def cut(cutLength, numCuts):
+
+def cut(cutLength, numCuts):
     steps = stepsPerIn*convert_to_inch(cutLength)
-    print(str(steps) + " steps")
+    print(str(int(steps)) + " steps")
     for i in range(int(numCuts)):
         GPIO.output(dir,off)
         GPIO.output(pul,off)
@@ -90,7 +82,7 @@ def convert_to_inch(val):
         time.sleep(.0001)
         GPIO.output(dir,on)
         time.sleep(.0001)
-        for i in range(steps):
+        for i in range(int(steps)):
             GPIO.output(pul,on)
             time.sleep(.01/int(jogSpeed))
             GPIO.output(pul,off)
@@ -109,8 +101,29 @@ def goHome():
         time.sleep(0.005)
         GPIO.output(pul,off)
     home = 1
-"""
 
+def convert_to_inch(val):
+        #val = str(val)
+        numList = re.findall('\d*\.?\d+',val)
+        num = float(numList[0])
+        print(num)
+        if "FT" in val.upper() or "FEET" in val.upper() or "\'" in val.upper():
+            result = num*12
+        elif "MM" in val.upper():
+            result = num/25.4
+        elif "CM" in val.upper():
+            result = num/2.54
+        elif "IN" in val.upper() or "INCHES" in val.upper() or "\"" in val.upper():
+            if "/" in val.upper():
+                print("fraction")
+                result = num + (float(numList[1])/float(numList[2]))
+            else:
+                result = num
+        else:
+            result = val
+            
+        return round(float(result),1)
+    
 class Widget1():
     
     def __init__(self, parent):
@@ -197,12 +210,16 @@ class Widget1():
         self.cutIndicator.place(x = 920, y = 180, width = 150, height = 50)
         self.label4 = Label(self.ta1, anchor='w', text = "Cut Length", bg = "#212121", fg = "#ffffff", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
         self.label4.place(x = 570, y = 140, width = 110, height = 32)
+        self.num_cuts_filler = Label(self.ta1, anchor='e', highlightthickness = 0, text = "", bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
+        self.num_cuts_filler.place(x = 570, y = 280, width = 150, height = 50)
         self.num_cuts = Entry(self.ta1, border = 0, highlightthickness = 0,bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
-        self.num_cuts.place(x = 570, y = 280, width = 510, height = 50)
+        self.num_cuts.place(x = 580, y = 280, width = 500, height = 50)
         self.label5 = Label(self.ta1,anchor='w', text = "Number of cuts", bg = "#212121", fg = "#ffffff", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
         self.label5.place(x = 570, y = 250, width = 150, height = 22)
+        self.remainder_filler = Label(self.ta1, anchor='e', highlightthickness = 0, text = "", bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
+        self.remainder_filler.place(x = 570, y = 380, width = 150, height = 50)
         self.remainder = Label(self.ta1, bg = "#333333", fg = "#FFFFFF", anchor='w', font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
-        self.remainder.place(x = 570, y = 380, width = 510, height = 50)
+        self.remainder.place(x = 580, y = 380, width = 500, height = 50)
         self.label6 = Label(self.ta1,anchor='w', text = "Remainder", bg = "#212121", fg = "#ffffff", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
         self.label6.place(x = 570, y = 350, width = 100, height = 22)
         self.label7 = Label(self.ta1, anchor='w', text = "Message:", bg = "#212121", fg = "#ffffff", font = tkinter.font.Font(family = font, size = 12, weight = 'bold'), cursor = "arrow", state = "normal")
@@ -290,10 +307,10 @@ class Widget1():
     def home_pressed(self):
         self.label8.configure(text = "Homing...")      
         print("homing")
-        #goHome()
+        goHome()
         global home
         home = 1
-        #self.home.configure(bg = "#333333")
+        self.home.configure(bg = "#333333")
         
         self.label8.configure(text = "Homed!")
         self.home.configure(bg = "#278a41", activebackground = "#056820")
@@ -313,7 +330,7 @@ class Widget1():
         elif convert_to_inch(self.soffit_length.get()) > defaultSoffitLength:
             print(defaultSoffitLength)
             self.soffit_length.focus_set()
-            self.label8.configure(text = "The Maximum Soffit Size is " + str(convert_to_inch(defaultSoffitLength/12)) +"ft (" + str(defaultSoffitLength) + "in)", fg = "#bd251a")
+            self.label8.configure(text = "The Maximum Soffit Size is " + str(convert_to_inch(defaultSoffitLength)/12) +"ft (" + str(defaultSoffitLength) + "in)", fg = "#bd251a")
         elif self.cut_length.index("end") == 0:
             self.label8.configure(text = "Please Enter a Value in the Cut Length Box")
             self.cut_length.focus_set()
@@ -327,6 +344,7 @@ class Widget1():
             self.num_cuts.insert(END, str(math.floor((convert_to_inch(self.soffit_length.get()))/convert_to_inch(self.cut_length.get()))))
             self.label8.configure(text = "Auto Populated Number of cuts", fg = "#278a41")
             self.num_cuts.configure(bg = "#278a41")
+            self.num_cuts_filler.configure(bg = "#278a41")
             self.soffit_length.configure(bg="#333333")
             self.cut_length.configure(bg="#333333")
             self.cutIndicator.configure(bg="#333333")
@@ -334,24 +352,27 @@ class Widget1():
         elif self.num_cuts.index("end") > 0 and convert_to_inch(self.cut_length.get())*int(self.num_cuts.get())>convert_to_inch(self.soffit_length.get()):
             self.label8.configure(text = "Not Enough Material for This Cut", fg = "#bd251a")
         
-            
+         
         else:
-            if str(self.soffit_length.get().isdecimal()):
+            ls1 = str(self.soffit_length.get()).split(".")
+            ls2 = str(self.cut_length.get()).split(".")
+            if all(n.isdigit() for n in ls1) and len(ls1) <= 2:
                 self.soffitIndicator.configure(text = "inches")
                 
-            if self.cut_length.get().isdecimal():
+            if all(n.isdigit() for n in ls2) and len(ls2) <= 2:
                 self.cutIndicator.configure(text = "inches")
             
                 
             self.num_cuts.configure(bg="#333333")
-            self.remainder.configure(text = str(convert_to_inch(self.soffit_length.get())-(convert_to_inch(self.cut_length.get())*int(self.num_cuts.get()))) + "in")
+            self.num_cuts_filler.configure(bg = "#333333")
+            self.remainder.configure(text = str(round(convert_to_inch(self.soffit_length.get())-(convert_to_inch(self.cut_length.get())*int(self.num_cuts.get())),2)) + "in")
             self.button6.place_forget()
             self.button7.place(x = 835, y = 488, width = 245, height = 152)
             self.button8.place(x = 570, y = 488, width = 245, height = 152)
             if int(self.num_cuts.get()) > 1:
-                message = "You are about to cut a " + str(convert_to_inch(self.soffit_length.get())) + " inch piece of soffit \n into " + str(self.num_cuts.get()) + ", " + str(convert_to_inch(self.cut_length.get())) + " inch pieces. You will have " + str(''.join(filter(str.isdigit, self.remainder['text']))) + " inches \n left over. Press cut to continue or back to go back"
+                message = "You are about to cut a " + str(convert_to_inch(self.soffit_length.get())) + " inch piece of soffit \n into " + str(self.num_cuts.get()) + ", " + str(convert_to_inch(self.cut_length.get())) + " inch pieces. You will have " + str(self.remainder['text']) + " \n left over. Press cut to continue or back to go back"
             else: 
-                message = "You are about to cut a " + str(convert_to_inch(self.soffit_length.get())) + " inch piece of soffit \n into " + str(self.num_cuts.get()) + ", " + str(convert_to_inch(self.cut_length.get())) + " inch piece. You will have " + str(''.join(filter(str.isdigit, self.remainder['text']))) + " inches \n left over. Press cut to continue or back to go back"
+                message = "You are about to cut a " + str(convert_to_inch(self.soffit_length.get())) + " inch piece of soffit \n into " + str(self.num_cuts.get()) + ", " + str(convert_to_inch(self.cut_length.get())) + " inch piece. You will have " + str(self.remainder['text']) + " \n left over. Press cut to continue or back to go back"
             
             
             self.label8.configure(text = message, fg = "#ffffff")
@@ -366,10 +387,11 @@ class Widget1():
         print('cut_pressed')
         self.home.configure(bg = "#333333")
         self.label8.configure(text = "Cutting...")
-        #cut(self.cut_length.get(),int(self.num_cuts.get()))
+        cut(self.cut_length.get(),int(self.num_cuts.get()))
         self.label8.configure(text = "Cut is complete, homing...")
-        #goHome()
+        goHome()
         self.label8.configure(text = "Done!", fg = "#278a41")
+        self.home.configure(bg = "#278a41")
         self.button7.place_forget()
         self.button8.place_forget()
         self.button6.place(x = 570, y = 488, width = 510, height = 152)
@@ -392,17 +414,17 @@ class Widget1():
     def jog_forward(self):
         print('jog_forward')
         self.home.configure(bg = "#333333")
-        #moveright(int(stepsPerIn*jog_distance))
+        moveright(int(stepsPerIn*jog_distance))
     def jog_backward(self):
         print('jog_backward')
         self.home.configure(bg = "#333333")
-        #moveleft(int(stepsPerIn*jog_distance))
+        moveleft(int(stepsPerIn*jog_distance))
     def lock_pressed(self):
         print('lock_pressed')
-        #GPIO.output(ena,off)
+        GPIO.output(ena,off)
     def unlock_pressed(self):
         print('unlock_pressed')
-        #GPIO.output(ena,on)
+        GPIO.output(ena,on)
     
     
 if __name__ == '__main__':
