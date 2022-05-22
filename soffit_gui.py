@@ -6,7 +6,7 @@ import re
 import tkinter.font
 import math
 import time
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 
 home = 0
 readyToCut = 0
@@ -25,6 +25,7 @@ cutRelay = 23
 
 
 num_pressed = 0
+"""
 on = GPIO.HIGH
 off = GPIO.LOW
 GPIO.setmode(GPIO.BCM)
@@ -101,13 +102,17 @@ def goHome():
         time.sleep(0.005)
         GPIO.output(pul,off)
     home = 1
-
+"""
 def convert_to_inch(val):
         #val = str(val)
         numList = re.findall('\d*\.?\d+',val)
         num = float(numList[0])
         print(num)
-        if "FT" in val.upper() or "FEET" in val.upper() or "\'" in val.upper():
+        if "IN" in val.upper() and "FT" in val.upper():
+            result = (float(numList[0])*12)+(float(numList[1]))
+            if "/" in val.upper():
+                result = (float(numList[0])*12)+(float(numList[1])) + (float(numList[2])/float(numList[3]))
+        elif "FT" in val.upper() or "FEET" in val.upper() or "\'" in val.upper():
             result = num*12
         elif "MM" in val.upper():
             result = num/25.4
@@ -119,9 +124,14 @@ def convert_to_inch(val):
                 result = num + (float(numList[1])/float(numList[2]))
             else:
                 result = num
+        
         else:
-            result = val
-            
+            if "/" in val.upper():
+                print("fraction")
+                result = num + (float(numList[1])/float(numList[2]))
+            else:
+                result = num
+                
         return round(float(result),1)
     
 class Widget1():
@@ -135,7 +145,7 @@ class Widget1():
             self.w1 = Tk()
             self.w1.title("Soffit Cutter")
             self.value = BooleanVar()
-            
+            self.r1_v = IntVar()
             self.w1.configure(bg = '#212121')
             self.w1.geometry('1150x740')
             self.w1.resizable(0,0)
@@ -161,13 +171,14 @@ class Widget1():
         self.forward_jog = Button(self.ta1, border = 0, anchor="n",highlightthickness = 0, text = ">", bg = "#333333", fg = "#FFFFFF", activebackground = "#111111", activeforeground= "#FFFFFF",font = tkinter.font.Font(family = font, size = 70), cursor = "arrow", state = "normal")
         self.forward_jog.place(x = 300, y = 220, width = 250, height = 150)
         self.forward_jog['command'] = self.jog_forward
-        self.radio_one = Radiobutton(self.ta1, highlightthickness = 0, selectcolor = "#212121", bg = "#212121", fg = "#ffffff", activebackground = "#212121", activeforeground= "#FFFFFF",text = "1in", value = 1, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
+        self.radio_one = Radiobutton(self.ta1, highlightthickness = 0, variable=self.r1_v, selectcolor = "#212121", bg = "#212121", fg = "#ffffff", activebackground = "#212121", activeforeground= "#FFFFFF",text = "1in", value = 1, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
         self.radio_one.place(x = 180, y = 390, width = 90, height = 32)
         self.radio_one['command'] = self.one_selected
-        self.radio_six = Radiobutton(self.ta1, highlightthickness = 0, selectcolor = "#212121", bg = "#212121", fg = "#ffffff",activebackground = "#212121", activeforeground= "#FFFFFF", text = "6in", value = 2, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
+        self.r1_v.set(2)
+        self.radio_six = Radiobutton(self.ta1, highlightthickness = 0, variable=self.r1_v, selectcolor = "#212121", bg = "#212121", fg = "#ffffff",activebackground = "#212121", activeforeground= "#FFFFFF", text = "6in", value = 2, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
         self.radio_six.place(x = 280, y = 390, width = 90, height = 32)
         self.radio_six['command'] = self.six_selected
-        self.radio_twelve = Radiobutton(self.ta1, highlightthickness = 0, selectcolor = "#212121", bg = "#212121", fg = "#ffffff", activebackground = "#212121", activeforeground= "#FFFFFF", text = "12in", value = 3, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
+        self.radio_twelve = Radiobutton(self.ta1, highlightthickness = 0, variable=self.r1_v, selectcolor = "#212121", bg = "#212121", fg = "#ffffff", activebackground = "#212121", activeforeground= "#FFFFFF", text = "12in", value = 3, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
         self.radio_twelve.place(x = 380, y = 390, width = 110, height = 32)
         self.radio_twelve['command'] = self.twelve_selected
         self.home = Button(self.ta1, border = 0, highlightthickness = 0,text = "Home", bg = "#333333", fg = "#FFFFFF", activebackground = "#111111", activeforeground= "#FFFFFF",font = tkinter.font.Font(family = font, size = 15, weight = 'bold'), cursor = "arrow", state = "normal")
@@ -257,7 +268,9 @@ class Widget1():
         def _callback():
             print(1)
             val = self.soffit_length.get()
-            if "FT" in val.upper() or "FEET" in val.upper() or "\'" in val.upper():
+            if "IN" in val.upper() and "FT" in val.upper():
+                self.soffitIndicator.configure(text = "feet + inches")
+            elif "FT" in val.upper() or "FEET" in val.upper() or "\'" in val.upper():
                 self.soffitIndicator.configure(text = "feet")
             elif "MM" in val.upper():
                 self.soffitIndicator.configure(text = "millimeters")
@@ -275,7 +288,9 @@ class Widget1():
         def _callback1():
             print(2)
             val = self.cut_length.get()
-            if "FT" in val.upper() or "FEET" in val.upper() or "\'" in val.upper():
+            if "IN" in val.upper() and "FT" in val.upper():
+                self.cutIndicator.configure(text = "feet + inches")
+            elif "FT" in val.upper() or "FEET" in val.upper() or "\'" in val.upper():
                 self.cutIndicator.configure(text = "feet")
             elif "MM" in val.upper():
                 self.cutIndicator.configure(text = "millimeters")
@@ -307,7 +322,7 @@ class Widget1():
     def home_pressed(self):
         self.label8.configure(text = "Homing...")      
         print("homing")
-        goHome()
+        #goHome()
         global home
         home = 1
         self.home.configure(bg = "#333333")
@@ -387,9 +402,9 @@ class Widget1():
         print('cut_pressed')
         self.home.configure(bg = "#333333")
         self.label8.configure(text = "Cutting...")
-        cut(self.cut_length.get(),int(self.num_cuts.get()))
+        #cut(self.cut_length.get(),int(self.num_cuts.get()))
         self.label8.configure(text = "Cut is complete, homing...")
-        goHome()
+        #goHome()
         self.label8.configure(text = "Done!", fg = "#278a41")
         self.home.configure(bg = "#278a41")
         self.button7.place_forget()
@@ -414,17 +429,17 @@ class Widget1():
     def jog_forward(self):
         print('jog_forward')
         self.home.configure(bg = "#333333")
-        moveright(int(stepsPerIn*jog_distance))
+        #moveright(int(stepsPerIn*jog_distance))
     def jog_backward(self):
         print('jog_backward')
         self.home.configure(bg = "#333333")
-        moveleft(int(stepsPerIn*jog_distance))
+        #moveleft(int(stepsPerIn*jog_distance))
     def lock_pressed(self):
         print('lock_pressed')
-        GPIO.output(ena,off)
+        #GPIO.output(ena,off)
     def unlock_pressed(self):
         print('unlock_pressed')
-        GPIO.output(ena,on)
+        #GPIO.output(ena,on)
     
     
 if __name__ == '__main__':
