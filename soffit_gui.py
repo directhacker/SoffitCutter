@@ -6,11 +6,11 @@ import re
 import tkinter.font
 import math
 import time
-#import RPi.GPIO as GPIO
-
+import RPi.GPIO as GPIO
+run=True
 home = 0
 readyToCut = 0
-defaultSoffitLength = 144
+defaultSoffitLength = 144.0
 stepsPerIn = 400
 jogSpeed = 10
 
@@ -24,8 +24,6 @@ switch = 21
 cutRelay = 23
 
 
-num_pressed = 0
-"""
 on = GPIO.HIGH
 off = GPIO.LOW
 GPIO.setmode(GPIO.BCM)
@@ -102,12 +100,12 @@ def goHome():
         time.sleep(0.005)
         GPIO.output(pul,off)
     home = 1
-"""
+
 def convert_to_inch(val):
-        #val = str(val)
+        
         numList = re.findall('\d*\.?\d+',val)
         num = float(numList[0])
-        print(num)
+        print(numList)
         if "IN" in val.upper() and "FT" in val.upper():
             result = (float(numList[0])*12)+(float(numList[1]))
             if "/" in val.upper():
@@ -174,11 +172,11 @@ class Widget1():
         self.radio_one = Radiobutton(self.ta1, highlightthickness = 0, variable=self.r1_v, selectcolor = "#212121", bg = "#212121", fg = "#ffffff", activebackground = "#212121", activeforeground= "#FFFFFF",text = "1in", value = 1, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
         self.radio_one.place(x = 180, y = 390, width = 90, height = 32)
         self.radio_one['command'] = self.one_selected
-        self.r1_v.set(2)
-        self.radio_six = Radiobutton(self.ta1, highlightthickness = 0, variable=self.r1_v, selectcolor = "#212121", bg = "#212121", fg = "#ffffff",activebackground = "#212121", activeforeground= "#FFFFFF", text = "6in", value = 2, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
+        self.r1_v.set(6)
+        self.radio_six = Radiobutton(self.ta1, highlightthickness = 0, variable=self.r1_v, selectcolor = "#212121", bg = "#212121", fg = "#ffffff",activebackground = "#212121", activeforeground= "#FFFFFF", text = "6in", value = 6, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
         self.radio_six.place(x = 280, y = 390, width = 90, height = 32)
         self.radio_six['command'] = self.six_selected
-        self.radio_twelve = Radiobutton(self.ta1, highlightthickness = 0, variable=self.r1_v, selectcolor = "#212121", bg = "#212121", fg = "#ffffff", activebackground = "#212121", activeforeground= "#FFFFFF", text = "12in", value = 3, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
+        self.radio_twelve = Radiobutton(self.ta1, highlightthickness = 0, variable=self.r1_v, selectcolor = "#212121", bg = "#212121", fg = "#ffffff", activebackground = "#212121", activeforeground= "#FFFFFF", text = "12in", value = 12, font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
         self.radio_twelve.place(x = 380, y = 390, width = 110, height = 32)
         self.radio_twelve['command'] = self.twelve_selected
         self.home = Button(self.ta1, border = 0, highlightthickness = 0,text = "Home", bg = "#333333", fg = "#FFFFFF", activebackground = "#111111", activeforeground= "#FFFFFF",font = tkinter.font.Font(family = font, size = 15, weight = 'bold'), cursor = "arrow", state = "normal")
@@ -322,7 +320,7 @@ class Widget1():
     def home_pressed(self):
         self.label8.configure(text = "Homing...")      
         print("homing")
-        #goHome()
+        goHome()
         global home
         home = 1
         self.home.configure(bg = "#333333")
@@ -344,8 +342,12 @@ class Widget1():
             self.soffit_filler.configure(bg="#632e2a")
         elif convert_to_inch(self.soffit_length.get()) > defaultSoffitLength:
             print(defaultSoffitLength)
+            print(convert_to_inch(self.soffit_length.get())/12)
             self.soffit_length.focus_set()
-            self.label8.configure(text = "The Maximum Soffit Size is " + str(convert_to_inch(defaultSoffitLength)/12) +"ft (" + str(defaultSoffitLength) + "in)", fg = "#bd251a")
+            self.soffit_length.configure(bg="#632e2a")
+            self.soffitIndicator.configure(bg="#632e2a")
+            self.soffit_filler.configure(bg="#632e2a")
+            self.label8.configure(text = "The Maximum Soffit Size is " + str(convert_to_inch(str(defaultSoffitLength))/12) +"ft (" + str(defaultSoffitLength) + "in)", fg = "#bd251a")
         elif self.cut_length.index("end") == 0:
             self.label8.configure(text = "Please Enter a Value in the Cut Length Box")
             self.cut_length.focus_set()
@@ -402,9 +404,9 @@ class Widget1():
         print('cut_pressed')
         self.home.configure(bg = "#333333")
         self.label8.configure(text = "Cutting...")
-        #cut(self.cut_length.get(),int(self.num_cuts.get()))
+        cut(self.cut_length.get(),int(self.num_cuts.get()))
         self.label8.configure(text = "Cut is complete, homing...")
-        #goHome()
+        goHome()
         self.label8.configure(text = "Done!", fg = "#278a41")
         self.home.configure(bg = "#278a41")
         self.button7.place_forget()
@@ -429,20 +431,21 @@ class Widget1():
     def jog_forward(self):
         print('jog_forward')
         self.home.configure(bg = "#333333")
-        #moveright(int(stepsPerIn*jog_distance))
+        moveright(int(stepsPerIn*self.r1_v.get()))
     def jog_backward(self):
         print('jog_backward')
         self.home.configure(bg = "#333333")
-        #moveleft(int(stepsPerIn*jog_distance))
+        moveleft(int(stepsPerIn*self.r1_v.get()))
     def lock_pressed(self):
         print('lock_pressed')
-        #GPIO.output(ena,off)
+        GPIO.output(ena,off)
     def unlock_pressed(self):
         print('unlock_pressed')
-        #GPIO.output(ena,on)
+        GPIO.output(ena,on)
     
     
 if __name__ == '__main__':
     a = Widget1(0)
     a.w1.mainloop()
+
 
