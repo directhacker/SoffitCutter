@@ -7,15 +7,22 @@ import tkinter.font
 import math
 import time
 import RPi.GPIO as GPIO
-run=True
+import configparser
+import helper
+
 home = 0
+config = helper.read_config()
+config_file = configparser.ConfigParser()
 readyToCut = 0
-defaultSoffitLength = 144.0
-stepsPerIn = 400
-jogSpeed = 10
+defaultSoffitLength = float(config['Soffit Cutter Defaults']['Default Soffit Length'])
+stepsPerIn = int(config['Soffit Cutter Defaults']['Steps Per Inch'])
+jogSpeed = int(config['Soffit Cutter Defaults']['Jog Speed'])
 
 font = "Quicksand"
-require_home = True
+if "True" in (config['Soffit Cutter Defaults']['Require Home']):
+    require_home = True
+else:
+    require_home = False
 
 pul = 17
 dir = 27
@@ -237,15 +244,17 @@ class Widget1():
         self.label8.place(x = 40, y = 488, width = 510, height = 152)
         self.jog_speed = Entry(self.ta2, border = 0, highlightthickness = 0,bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = font, size = 8), cursor = "arrow", state = "normal")
         self.jog_speed.place(x = 40, y = 84, width = 80, height = 30)
-        self.jog_speed.insert(INSERT, "10")
+        self.jog_speed.insert(INSERT, (config['Soffit Cutter Defaults']['Jog Speed']))
         self.jog_speed_label = Label(self.ta2, anchor='w', bg = "#212121", fg = "#ffffff",text = "Jog Speed", font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
         self.jog_speed_label.place(x = 38, y = 50, width = 127, height = 32)
         self.require_homing = Checkbutton(self.ta2,anchor='w', variable=self.value, highlightthickness = 0, selectcolor="#212121", bg = "#212121", fg = "#ffffff", text = "Require Homing(recommended)", activebackground = "#212121", activeforeground= "#ffffff", font = tkinter.font.Font(family = font, size = 10), cursor = "arrow", state = "normal")
         self.require_homing.place(x = 38, y = 270, width = 480, height = 30)
-        self.require_homing.select()
+        if "True" in config['Soffit Cutter Defaults']['Require Home']:
+            print(bool((config['Soffit Cutter Defaults']['Require Home'])))
+            self.require_homing.select()
         self.default_soffit_length = Entry(self.ta2, border = 0, highlightthickness = 0,bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = "Bahnschrift", size = 8), cursor = "arrow", state = "normal")
         self.default_soffit_length.place(x = 40, y = 220, width = 80, height = 30)
-        self.default_soffit_length.insert(INSERT, "144in")
+        self.default_soffit_length.insert(INSERT, ((config['Soffit Cutter Defaults']['Default Soffit Length'])+"in"))
         self.soffit_length_label = Label(self.ta2, anchor='w',bg = "#212121", fg = "#ffffff", text = "Maximum Soffit Length", font = tkinter.font.Font(family = "Bahnschrift", size = 10), cursor = "arrow", state = "normal")
         self.soffit_length_label.place(x = 38, y = 190, width = 350, height = 30)
         self.button2 = Button(self.ta2, border = 0, highlightthickness = 0,bg = "#333333", fg = "#FFFFFF", activebackground = "#111111", activeforeground= "#FFFFFF", text = "Apply", font = tkinter.font.Font(family = "Bahnschrift", size = 10), cursor = "arrow", state = "normal")
@@ -255,7 +264,7 @@ class Widget1():
         self.author.place(x = 30, y = 670, width = 200, height = 32)
         self.step_per_in = Entry(self.ta2, border = 0, highlightthickness = 0,bg = "#333333", fg = "#FFFFFF", font = tkinter.font.Font(family = "Bahnschrift", size = 8), cursor = "arrow", state = "normal")
         self.step_per_in.place(x = 40, y = 150, width = 80, height = 30)
-        self.step_per_in.insert(INSERT, "400")
+        self.step_per_in.insert(INSERT, (config['Soffit Cutter Defaults']['Steps Per Inch']))
         self.step_per_in_label = Label(self.ta2, anchor='w', bg = "#212121", fg = "#ffffff",text = "Steps/Inch", font = tkinter.font.Font(family = "Bahnschrift", size = 10), cursor = "arrow", state = "normal")
         self.step_per_in_label.place(x = 38, y = 120, width = 127, height = 32)
         def callback(event):
@@ -305,15 +314,21 @@ class Widget1():
         
     def settings_applied(self):
         print('settings_applied')
+        config_file.read("configurations.ini")
         global defaultSoffitLength
         global jogSpeed
         global stepsPerIn
         global require_home
+        config_file["Soffit Cutter Defaults"]["Require Home"] = str(self.value.get())
+        config_file["Soffit Cutter Defaults"]["Jog Speed"] = str(self.jog_speed.get())
+        config_file["Soffit Cutter Defaults"]["Steps Per Inch"] = str(self.step_per_in.get())
+        config_file["Soffit Cutter Defaults"]["Default Soffit Length"] = str(convert_to_inch(self.default_soffit_length.get()))
         require_home = self.value.get()
-        jogSpeed = self.jog_speed.get()
-        defaultSoffitLength = convert_to_inch(self.default_soffit_length.get())
-        stepsPerIn = int(self.step_per_in.get())
-        print(require_home)
+        jogSpeed = int(config['Soffit Cutter Defaults']['Jog Speed'])
+        defaultSoffitLength = convert_to_inch((config['Soffit Cutter Defaults']['Default Soffit Length']))
+        stepsPerIn = int(config['Soffit Cutter Defaults']['Steps Per Inch'])
+        with open("configurations.ini","w") as file_object:
+            config_file.write(file_object)
         
     
     
@@ -329,7 +344,9 @@ class Widget1():
         self.home.configure(bg = "#278a41", activebackground = "#056820")
     
     def next_pressed(self):
-        print('next_pressed')
+        print(require_home)
+        print((config['Soffit Cutter Defaults']['Require Home']))
+        print(home)
         if home == 0 and require_home:
             self.label8.configure(text = "Please Home Machine Before Cutting")
             self.home.configure(bg = "#632e2a")
